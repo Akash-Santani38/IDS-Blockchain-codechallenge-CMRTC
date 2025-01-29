@@ -1,0 +1,86 @@
+class Token:
+    def _init_(self, name, symbol, initial_supply):
+        self.name = name
+        self.symbol = symbol
+        self.supply = initial_supply  # Total supply of tokens in circulation
+        self.balances = {}  # A dictionary to store the balance of each account
+
+    def add_account(self, account, balance=0):
+        """Add a new account with a specific balance."""
+        if account not in self.balances:
+            self.balances[account] = balance
+        else:
+            print(f"Account {account} already exists.")
+
+    def mint(self, account, amount):
+        """Mint new tokens and add to the account balance."""
+        if account in self.balances:
+            self.supply += amount
+            self.balances[account] += amount
+            print(f"{amount} {self.symbol} minted to {account}. New balance: {self.balances[account]}")
+        else:
+            print(f"Account {account} does not exist.")
+
+    def transfer(self, from_account, to_account, amount):
+        """Transfer tokens from one account to another."""
+        if from_account not in self.balances:
+            print(f"Account {from_account} does not exist.")
+            return
+
+        if to_account not in self.balances:
+            print(f"Account {to_account} does not exist.")
+            return
+
+        if self.balances[from_account] >= amount:
+            self.balances[from_account] -= amount
+            self.balances[to_account] += amount
+            print(f"{amount} {self.symbol} transferred from {from_account} to {to_account}.")
+            print(f"New balance of {from_account}: {self.balances[from_account]}")
+            print(f"New balance of {to_account}: {self.balances[to_account]}")
+        else:
+            print(f"Insufficient balance in {from_account}'s account.")
+
+    def distribute_tokens(self, amounts_dict):
+        """Distribute tokens to multiple accounts."""
+        for account, amount in amounts_dict.items():
+            if account in self.balances:
+                self.mint(account, amount)
+            else:
+                print(f"Account {account} does not exist.")
+
+    def get_balance(self, account):
+        """Get the balance of a specific account."""
+        return self.balances.get(account, 0)
+
+    def get_total_supply(self):
+        """Get the total supply of the token."""
+        return self.supply
+
+
+# Create a new fungible token
+my_token = Token(name="MyToken", symbol="MTK", initial_supply=1000)
+
+# Add initial accounts with balances
+my_token.add_account('Treasury', 950)
+my_token.add_account('Recipient', 50)
+
+# Display initial state
+print(f"Initial Treasury Balance: {my_token.get_balance('Treasury')}")
+print(f"Initial Recipient Balance: {my_token.get_balance('Recipient')}")
+print(f"Total Supply: {my_token.get_total_supply()}")
+
+# Transfer tokens from Treasury to Recipient
+my_token.transfer('Treasury', 'Recipient', 100)
+
+# Mint additional tokens and distribute to multiple accounts
+mint_amounts = {
+    'Treasury': 500,
+    'Recipient': 200
+}
+
+my_token.distribute_tokens(mint_amounts)
+
+# Display final balances
+print(f"Final Treasury Balance: {my_token.get_balance('Treasury')}")
+print(f"Final Recipient Balance: {my_token.get_balance('Recipient')}")
+print(f"Total Supply: {my_token.get_total_supply()}")
