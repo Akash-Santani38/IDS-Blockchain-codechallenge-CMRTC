@@ -1,0 +1,57 @@
+from datetime import datetime, timedelta
+
+class EventManager:
+    def __init__(self):  # Fixed typo: __init__ instead of _init_
+        self.events = []
+
+    def add_event(self, start_time, end_time, description):
+        start_time = datetime.strptime(start_time, "%H:%M")
+        end_time = datetime.strptime(end_time, "%H:%M")
+
+        conflict = self.detect_conflict(start_time, end_time)
+        if conflict:
+            print(f"⚠️ Conflict: '{description}' overlaps with '{conflict['desc']}' ({conflict['start'].strftime('%H:%M')} - {conflict['end'].strftime('%H:%M')})")
+            alternative_time = self.find_alternative_slot(start_time, end_time)
+            if alternative_time:
+                print(f"✅ Suggested: {alternative_time[0].strftime('%H:%M')} - {alternative_time[1].strftime('%H:%M')}")
+                # If you want to add the event at the suggested time, you can do so here
+                start_time, end_time = alternative_time
+            else:
+                print("❌ No alternative time found.")
+                return False
+        self.events.append({"start": start_time, "end": end_time, "desc": description})
+        self.events.sort(key=lambda e: e["start"])
+        print(f"✔️ Event '{description}' added ({start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')})")
+        return True
+
+    def detect_conflict(self, start, end):
+        for event in self.events:
+            if start < event["end"] and end > event["start"]:
+                return event
+        return None
+
+    def find_alternative_slot(self, start, end):
+        duration = end - start
+        sorted_events = sorted(self.events, key=lambda e: e["end"])
+        last_end = datetime.strptime("08:00", "%H:%M")  # Start of the day
+
+        for event in sorted_events:
+            gap = event["start"] - last_end
+            if gap >= duration:
+                return last_end, last_end + duration
+            last_end = event["end"]
+
+        # If no gap found, push event after the last event
+        return last_end, last_end + duration
+
+# Initialize Event Manager
+manager = EventManager()
+
+# Adding events
+manager.add_event("09:00", "10:30", "Meeting A")
+manager.add_event("10:00", "11:30", "Workshop B")  # Conflict
+manager.add_event("10:30", "12:00", "Presentation C")  # Conflict
+manager.add_event("12:00", "13:00", "Lunch Break")
+
+# Reschedule "Workshop B" to suggested time
+manager.add_event("13:00", "14:30", "Workshop B (Rescheduled)")
